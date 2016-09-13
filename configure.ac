@@ -239,7 +239,7 @@ AM_CONDITIONAL(HAVE_MKL, test -n "$have_mkl")
 AC_CHECK_LIB(mkl, DftiCreateDescriptor, [have_mkl_dfti=yes])
 AM_CONDITIONAL(HAVE_MKL_DFTI, test -n "$have_mkl_dfti")
 
-AC_CHECK_HEADERS(mkl_fft.h)
+AC_CHECK_HEADERS(mkl.h)
 AC_CHECK_HEADERS(mkl_blas.h)
 
 
