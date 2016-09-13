@@ -18,7 +18,7 @@
 static const char *mkvers(void)
 {
      static char buf[160];
-     MKLGetVersionString(buf, 160);
+     MKL_Get_Version_String(buf, 160);
      return buf;
 }
 
@@ -110,7 +110,6 @@ void setup(struct problem *p)
      BENCH_ASSERT(status);
      DftiSetValue(the_descriptor, DFTI_PLACEMENT, 
 		  problem_in_place(p) ? DFTI_INPLACE : DFTI_NOT_INPLACE);
-     DftiSetValue(the_descriptor, DFTI_INITIALIZATION_EFFORT, DFTI_HIGH);
 		  
      DftiCommitDescriptor(the_descriptor);
 }
