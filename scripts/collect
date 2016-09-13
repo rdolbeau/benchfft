@@ -1,0 +1,41 @@
+#! /bin/sh
+#
+# This shell script collects all *.data files from the
+# benchees subdirectories.  If OUTFILE is given
+# as an argument, write OUTFILE.data and OUTFILE.info.
+# Otherwise, write `hostname`.data and `hostname`.info
+# Run sysinfo and output OUTFILE.sysinfo.
+# Produce OUTFILE.tar.gz with the results.
+#
+
+me=`echo "$0" | sed -e 's,.*/,,'`
+medir=`echo "$0" | sed -e 's,/[^/]*$,,'`
+
+usage="
+Usage: $0 benchees-directory [outfile]
+"
+
+case $# in
+ 0) echo "$me: missing arguments$usage" >&2
+    exit 1;;
+ 1) benchdir="$1";;
+ 2) benchdir="$1"; outfile="$2";;
+ *) echo "$me: too many arguments$usage" >&2
+    exit 1;;
+esac
+
+test -n "$outfile" || outfile=`(hostname || uname -n) 2>/dev/null | sed 1q`
+test -n "$outfile" || outfile="unnamed"
+
+cat ${benchdir}/*/*.speed >${outfile}.speed
+cat ${benchdir}/*/*.info >${outfile}.info
+cat ${benchdir}/*/*.accuracy >${outfile}.accuracy
+sh $medir/sysinfo >${outfile}.sysinfo
+extra="config.h config.log config.status"
+nextra=""
+for n in config.h config.log config.status; do
+    cp ${benchdir}/../${n} ${outfile}.${n}
+    nextra="${nextra} ${outfile}.${n}"
+done
+
+tar cf - ${outfile}.speed ${outfile}.accuracy ${outfile}.info ${outfile}.sysinfo ${nextra} | gzip -9 >${outfile}.tar.gz

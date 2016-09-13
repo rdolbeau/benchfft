@@ -1,0 +1,114 @@
+#! /bin/sh
+
+# find out as much as we can about this system
+
+# echo is not portable 
+case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
+  *c*,-n*) ECHO_N= ECHO_C='
+' ECHO_T='	' ;;
+  *c*,*  ) ECHO_N=-n ECHO_C= ECHO_T= ;;
+  *)      ECHO_N= ECHO_C='\c' ECHO_T= ;;
+esac
+
+medir=`echo "$0" | sed -e 's,/[^/]*$,,'`
+
+# 
+echo "-----------"
+echo "SYSTEM NAME"
+echo "-----------"
+echo
+
+for prog in hostname "uname -n" date uptime; do
+   x=`$prog 2>/dev/null | sed 1q`
+   if test -n "$x"; then echo "$prog: $x";  fi
+done 2>/dev/null
+
+echo
+echo "-----------"
+echo "SYSTEM TYPE"
+echo "-----------"
+echo
+x=`sh $medir/../config.guess 2>/dev/null | sed 1q`
+if test -n "$x"; then echo "config.guess: $x";  fi
+
+for prog in "uname -a" "/usr/sbin/sizer -c"; do
+   x=`$prog 2>/dev/null | sed 1q`
+   if test -n "$x"; then echo "$prog: $x";  fi
+done 2>/dev/null
+
+# Hardware information
+echo
+echo "--------------------"
+echo "HARDWARE INFORMATION"
+echo "--------------------"
+echo
+
+# programs with short output
+for prog in arch "arch -k" machine "uname -X" "/usr/sbin/sizer -c" vmstat sys hostinfo; do
+   x=`$prog 2>/dev/null`
+   if test -n "$x"; then echo "$prog: $x";  fi
+done 2>/dev/null
+
+# programs with a more verbose output
+for prog in hinv /usr/sbin/sysdef /usr/contrib/bin/machinfo '/usr/sbin/psrinfo -v' '/usr/sbin/pset_info' '/usr/sbin/ainfo NODEINFO' '/usr/sbin/AppleSystemProfiler'; do
+  x=`$prog 2>/dev/null`
+  if test -n "$x"; then 
+    echo
+    echo "$prog:"
+    echo "$x"
+    echo
+  fi
+done 2>/dev/null
+
+for file in /proc/cpuinfo /proc/meminfo; do
+  if test -r $file; then
+    echo
+    echo "$file:"
+    cat $file
+    echo
+  fi
+done 2>/dev/null
+
+
+# Compilers
+echo
+echo "---------"
+echo "COMPILERS"
+echo "---------"
+echo
+
+for compiler in $CC $CXX $F77 gcc g77 g++ cc CC cxx c++ icc ecc ifc efc f77 F77 f90 F90 f95 F95; do
+    for flag in --version -v -V -version; do
+       x=`$compiler $flag 2>&1` && (echo $ECHO_N "$compiler $flag: $ECHO_C"; echo "$x" | head -1)
+    done
+done 2>/dev/null
+
+echo
+echo "---------"
+echo "LIBRARIES"
+echo "---------"
+echo
+
+# there seems to be no reliable way to identify dxml
+if test -r /usr/lib/libdxml.a; then
+   # dxml is usually a symbolic link to a file.  The name of
+   # the file will at least tell us which CPU this is optimized
+   # for.
+   echo 'ls -l /usr/lib/libdxml* :'
+   ls -l /usr/lib/libdxml*
+
+   # look at the binary for the string xml
+   strings /usr/lib/libdxml.a | grep -i xml
+
+   # the man page may contain the version number:
+   (TERM=dumb; export TERM;
+     x=`man dxml | head -20` && (echo "man dxml:"; echo "$x"))
+fi 2>/dev/null
+
+echo
+echo "-----------"
+echo "ENVIRONMENT"
+echo "-----------"
+echo
+
+printenv

@@ -1,0 +1,8 @@
+FFTs to possibly add:
+
+NFFT (probably slow, but interesting for academic reasons)
+pdqfft
+edelblute
+monro [superseded by statlib?]
+SCSL
+ASCI Red
