@@ -152,6 +152,14 @@ test -n "$have_fftw3f" && test -n "$have_fftw3_h" && have_fftw3f_all=yes
 AM_CONDITIONAL(HAVE_FFTW3, test -n "$have_fftw3_all")
 AM_CONDITIONAL(HAVE_FFTW3F, test -n "$have_fftw3f_all")
 
+# Check for ARM Performance Library
+# uses fftw3 API ...
+AC_CHECK_LIB(armpl_tl, fftw_execute, [LARMPL="-larmpl_tl"; have_armpl=yes])
+# ... so also need the FFTW3 header
+test -n "$have_armpl" && test -n "$have_fftw3_h" && have_armpl_all=yes
+AM_CONDITIONAL(HAVE_ARMPL, test -n "$have_armpl_all")
+AC_SUBST(LARMPL)
+
 # Check for DEC Alpha DXML library
 AC_CHECK_LIB(dxml, zfft_, [have_dxml=yes; DXML_LIB=-ldxml], [AC_CHECK_LIB(cxml, zfft_, [have_dxml=yes; DXML_LIB=-lcxml])])
 AM_CONDITIONAL(HAVE_DXML, test -n "$have_dxml")
@@ -237,7 +245,7 @@ AC_CHECK_LIB(guide, omp_in_parallel)
 AC_CHECK_LIB(mkl, zfft1d_, [have_mkl=yes])
 AM_CONDITIONAL(HAVE_MKL, test -n "$have_mkl")
 AC_CHECK_LIB(c, DftiCreateDescriptor, [have_mkl_dfti=yes], [have_mkl_dfti=no], -mkl)
-AM_CONDITIONAL(HAVE_MKL_DFTI, test -n "$have_mkl_dfti")
+AM_CONDITIONAL(HAVE_MKL_DFTI, test "yes" = "$have_mkl_dfti")
 
 AC_CHECK_HEADERS(mkl.h)
 AC_CHECK_HEADERS(mkl_blas.h)
@@ -330,6 +338,7 @@ benchees/Makefile
 scripts/Makefile
 
 benchees/acml/Makefile
+benchees/armpl/Makefile
 benchees/arprec/Makefile
 benchees/bloodworth/Makefile
 benchees/burrus/Makefile
@@ -408,6 +417,7 @@ cat <<EOF
                                           Intel IPPS (gratis): ${have_ipps-no}
                                    Intel IPPS 64 bit (gratis): ${have_ipps64-no}
                                             AMD ACML (gratis): ${have_acml-no}
+				      ARM Performance Library: ${have_armpl-no}
 
                                 FFTW 2.x (free, www.fftw.org): ${have_fftw2_all-no}
                FFTW 2.x single precision (free, www.fftw.org): ${have_sfftw2_all-no}

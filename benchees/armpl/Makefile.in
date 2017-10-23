@@ -212,18 +212,19 @@ target_alias = @target_alias@
 target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
-@DOUBLE_TRUE@PRG = doit
+@DOUBLE_TRUE@@HAVE_ARMPL_TRUE@PRG = doit doitr
+@DOUBLE_FALSE@@HAVE_ARMPL_TRUE@PRG = doit doitr
+@DOUBLE_FALSE@@HAVE_ARMPL_TRUE@ARMPL_LIBS = @LARMPL@
+@DOUBLE_TRUE@@HAVE_ARMPL_TRUE@ARMPL_LIBS = @LARMPL@
 
-PKG = spiral_fft
-TARFILE = $(PKG).tar.gz
-EXTRA_DIST = $(TARFILE)
-
-INCLUDES = $(INCLBENCH) -I$(PKG)/include
-
-SPIRAL = $(PKG)/lib/libfft.a
+INCLUDES = $(INCLBENCH)
+BENCHMARK_USEROPT = ''
 
 doit_SOURCES = doit.c
-doit_LDADD = $(SPIRAL) $(LIBBENCH) @FLIBS@
+doit_LDADD = $(ARMPL_LIBS) $(LIBBENCH) @FLIBS@
+
+doitr_SOURCES = doitr.c
+doitr_LDADD = $(ARMPL_LIBS) $(LIBBENCH) @FLIBS@
 
 # This Makefile is included by all benchmark programs
 noinst_PROGRAMS = $(PRG)
@@ -235,36 +236,57 @@ MAXN = 262144
 MAXND = 2097152
 BENCHMARK = $(SHELL) ${top_srcdir}/scripts/benchmark --maxn=$(MAXN) --maxnd=$(MAXND) $(BENCHMARK_USEROPT) $(BENCHMARK_FLAGS) 
 WRITEINFO = $(SHELL) ${top_srcdir}/scripts/writeinfo
-@SINGLE_FALSE@PRECISION = double
 
 @SINGLE_TRUE@PRECISION = single
-subdir = benchees/spiral-fft
+@SINGLE_FALSE@PRECISION = double
+subdir = benchees/armpl
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
-@DOUBLE_TRUE@noinst_PROGRAMS = doit$(EXEEXT)
-@DOUBLE_FALSE@noinst_PROGRAMS =
+@DOUBLE_FALSE@@HAVE_ARMPL_TRUE@noinst_PROGRAMS = doit$(EXEEXT) \
+@DOUBLE_FALSE@@HAVE_ARMPL_TRUE@	doitr$(EXEEXT)
+@DOUBLE_FALSE@@HAVE_ARMPL_FALSE@noinst_PROGRAMS =
+@DOUBLE_TRUE@@HAVE_ARMPL_TRUE@noinst_PROGRAMS = doit$(EXEEXT) \
+@DOUBLE_TRUE@@HAVE_ARMPL_TRUE@	doitr$(EXEEXT)
+@DOUBLE_TRUE@@HAVE_ARMPL_FALSE@noinst_PROGRAMS =
 PROGRAMS = $(noinst_PROGRAMS)
 
 am_doit_OBJECTS = doit.$(OBJEXT)
 doit_OBJECTS = $(am_doit_OBJECTS)
-doit_DEPENDENCIES = $(PKG)/lib/libfft.a \
-	${top_builddir}/libbench/libbench.a
+@DOUBLE_FALSE@@HAVE_ARMPL_TRUE@doit_DEPENDENCIES = \
+@DOUBLE_FALSE@@HAVE_ARMPL_TRUE@	${top_builddir}/libbench/libbench.a
+@DOUBLE_FALSE@@HAVE_ARMPL_FALSE@doit_DEPENDENCIES = \
+@DOUBLE_FALSE@@HAVE_ARMPL_FALSE@	${top_builddir}/libbench/libbench.a
+@DOUBLE_TRUE@@HAVE_ARMPL_TRUE@doit_DEPENDENCIES = \
+@DOUBLE_TRUE@@HAVE_ARMPL_TRUE@	${top_builddir}/libbench/libbench.a
+@DOUBLE_TRUE@@HAVE_ARMPL_FALSE@doit_DEPENDENCIES = \
+@DOUBLE_TRUE@@HAVE_ARMPL_FALSE@	${top_builddir}/libbench/libbench.a
 doit_LDFLAGS =
+am_doitr_OBJECTS = doitr.$(OBJEXT)
+doitr_OBJECTS = $(am_doitr_OBJECTS)
+@DOUBLE_FALSE@@HAVE_ARMPL_TRUE@doitr_DEPENDENCIES = \
+@DOUBLE_FALSE@@HAVE_ARMPL_TRUE@	${top_builddir}/libbench/libbench.a
+@DOUBLE_FALSE@@HAVE_ARMPL_FALSE@doitr_DEPENDENCIES = \
+@DOUBLE_FALSE@@HAVE_ARMPL_FALSE@	${top_builddir}/libbench/libbench.a
+@DOUBLE_TRUE@@HAVE_ARMPL_TRUE@doitr_DEPENDENCIES = \
+@DOUBLE_TRUE@@HAVE_ARMPL_TRUE@	${top_builddir}/libbench/libbench.a
+@DOUBLE_TRUE@@HAVE_ARMPL_FALSE@doitr_DEPENDENCIES = \
+@DOUBLE_TRUE@@HAVE_ARMPL_FALSE@	${top_builddir}/libbench/libbench.a
+doitr_LDFLAGS =
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/doit.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/doit.Po ./$(DEPDIR)/doitr.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-DIST_SOURCES = $(doit_SOURCES)
+DIST_SOURCES = $(doit_SOURCES) $(doitr_SOURCES)
 DIST_COMMON = $(srcdir)/../Makefile.common $(srcdir)/Makefile.in \
 	Makefile.am
-SOURCES = $(doit_SOURCES)
+SOURCES = $(doit_SOURCES) $(doitr_SOURCES)
 
 all: all-am
 
@@ -272,7 +294,7 @@ all: all-am
 .SUFFIXES: .c .o .obj
 $(srcdir)/Makefile.in:  Makefile.am $(srcdir)/../Makefile.common $(top_srcdir)/configure.ac $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  benchees/spiral-fft/Makefile
+	  $(AUTOMAKE) --gnu  benchees/armpl/Makefile
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 
@@ -281,6 +303,9 @@ clean-noinstPROGRAMS:
 doit$(EXEEXT): $(doit_OBJECTS) $(doit_DEPENDENCIES) 
 	@rm -f doit$(EXEEXT)
 	$(LINK) $(doit_LDFLAGS) $(doit_OBJECTS) $(doit_LDADD) $(LIBS)
+doitr$(EXEEXT): $(doitr_OBJECTS) $(doitr_DEPENDENCIES) 
+	@rm -f doitr$(EXEEXT)
+	$(LINK) $(doitr_LDFLAGS) $(doitr_OBJECTS) $(doitr_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT) core *.core
@@ -289,6 +314,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/doit.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/doitr.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \
@@ -487,10 +513,6 @@ uninstall-am: uninstall-info-am
 	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-info-am
 
-doit.o: $(SPIRAL)
-
-$(SPIRAL): extract
-	cd $(PKG) && touch fft_pclprof && ./configure --prefix=`pwd` && $(MAKE) && $(MAKE) install
 
 # extract TARFILE
 extract: $(TARFILE)

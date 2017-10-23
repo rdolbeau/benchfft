@@ -655,6 +655,9 @@ HAVE_SUNPERF_TRUE
 DXML_LIB
 HAVE_DXML_FALSE
 HAVE_DXML_TRUE
+LARMPL
+HAVE_ARMPL_FALSE
+HAVE_ARMPL_TRUE
 HAVE_FFTW3F_FALSE
 HAVE_FFTW3F_TRUE
 HAVE_FFTW3_FALSE
@@ -771,6 +774,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -851,6 +855,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE}'
@@ -1103,6 +1108,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1240,7 +1254,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1393,6 +1407,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -3897,8 +3912,9 @@ ac_config_commands="$ac_config_commands depfiles"
 
 am_make=${MAKE-make}
 cat > confinc << 'END'
-doit:
+am__doit:
 	@echo done
+.PHONY: am__doit
 END
 # If we don't find an include directive, just comment out the code.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for style of include used by $am_make" >&5
@@ -3973,18 +3989,32 @@ else
   # using a relative directory.
   cp "$am_depcomp" conftest.dir
   cd conftest.dir
+  # We will build objects and dependencies in a subdirectory because
+  # it helps to detect inapplicable dependency modes.  For instance
+  # both Tru64's cc and ICC support -MD to output dependencies as a
+  # side effect of compilation, but ICC will put the dependencies in
+  # the current directory while Tru64 will put them in the object
+  # directory.
+  mkdir sub
 
   am_cv_CC_dependencies_compiler_type=none
   if test "$am_compiler_list" = ""; then
      am_compiler_list=`sed -n 's/^#*\([a-zA-Z0-9]*\))$/\1/p' < ./depcomp`
   fi
   for depmode in $am_compiler_list; do
+    # Setup a source with many dependencies, because some compilers
+    # like to wrap large dependency lists on column 80 (with \), and
+    # we should not choose a depcomp mode which is confused by this.
+    #
     # We need to recreate these files for each test, as the compiler may
     # overwrite some of them when testing with obscure command lines.
     # This happens at least with the AIX C compiler.
-    echo '#include "conftest.h"' > conftest.c
-    echo 'int i;' > conftest.h
-    echo "${am__include} ${am__quote}conftest.Po${am__quote}" > confmf
+    : > sub/conftest.c
+    for i in 1 2 3 4 5 6; do
+      echo '#include "conftst'$i'.h"' >> sub/conftest.c
+      : > sub/conftst$i.h
+    done
+    echo "${am__include} ${am__quote}sub/conftest.Po${am__quote}" > confmf
 
     case $depmode in
     nosideeffect)
@@ -4002,11 +4032,12 @@ else
     # mode.  It turns out that the SunPro C++ compiler does not properly
     # handle `-M -o', and we need to detect this.
     if depmode=$depmode \
-       source=conftest.c object=conftest.o \
-       depfile=conftest.Po tmpdepfile=conftest.TPo \
-       $SHELL ./depcomp $depcc -c -o conftest.o conftest.c \
+       source=sub/conftest.c object=sub/conftest.${OBJEXT-o} \
+       depfile=sub/conftest.Po tmpdepfile=sub/conftest.TPo \
+       $SHELL ./depcomp $depcc -c -o sub/conftest.${OBJEXT-o} sub/conftest.c \
          >/dev/null 2>conftest.err &&
-       grep conftest.h conftest.Po > /dev/null 2>&1 &&
+       grep sub/conftst6.h sub/conftest.Po > /dev/null 2>&1 &&
+       grep sub/conftest.${OBJEXT-o} sub/conftest.Po > /dev/null 2>&1 &&
        ${MAKE-make} -s -f confmf > /dev/null 2>&1; then
       # icc doesn't choke on unknown options, it will just issue warnings
       # (even with -Werror).  So we grep stderr for any message
@@ -4871,18 +4902,32 @@ else
   # using a relative directory.
   cp "$am_depcomp" conftest.dir
   cd conftest.dir
+  # We will build objects and dependencies in a subdirectory because
+  # it helps to detect inapplicable dependency modes.  For instance
+  # both Tru64's cc and ICC support -MD to output dependencies as a
+  # side effect of compilation, but ICC will put the dependencies in
+  # the current directory while Tru64 will put them in the object
+  # directory.
+  mkdir sub
 
   am_cv_CXX_dependencies_compiler_type=none
   if test "$am_compiler_list" = ""; then
      am_compiler_list=`sed -n 's/^#*\([a-zA-Z0-9]*\))$/\1/p' < ./depcomp`
   fi
   for depmode in $am_compiler_list; do
+    # Setup a source with many dependencies, because some compilers
+    # like to wrap large dependency lists on column 80 (with \), and
+    # we should not choose a depcomp mode which is confused by this.
+    #
     # We need to recreate these files for each test, as the compiler may
     # overwrite some of them when testing with obscure command lines.
     # This happens at least with the AIX C compiler.
-    echo '#include "conftest.h"' > conftest.c
-    echo 'int i;' > conftest.h
-    echo "${am__include} ${am__quote}conftest.Po${am__quote}" > confmf
+    : > sub/conftest.c
+    for i in 1 2 3 4 5 6; do
+      echo '#include "conftst'$i'.h"' >> sub/conftest.c
+      : > sub/conftst$i.h
+    done
+    echo "${am__include} ${am__quote}sub/conftest.Po${am__quote}" > confmf
 
     case $depmode in
     nosideeffect)
@@ -4900,11 +4945,12 @@ else
     # mode.  It turns out that the SunPro C++ compiler does not properly
     # handle `-M -o', and we need to detect this.
     if depmode=$depmode \
-       source=conftest.c object=conftest.o \
-       depfile=conftest.Po tmpdepfile=conftest.TPo \
-       $SHELL ./depcomp $depcc -c -o conftest.o conftest.c \
+       source=sub/conftest.c object=sub/conftest.${OBJEXT-o} \
+       depfile=sub/conftest.Po tmpdepfile=sub/conftest.TPo \
+       $SHELL ./depcomp $depcc -c -o sub/conftest.${OBJEXT-o} sub/conftest.c \
          >/dev/null 2>conftest.err &&
-       grep conftest.h conftest.Po > /dev/null 2>&1 &&
+       grep sub/conftst6.h sub/conftest.Po > /dev/null 2>&1 &&
+       grep sub/conftest.${OBJEXT-o} sub/conftest.Po > /dev/null 2>&1 &&
        ${MAKE-make} -s -f confmf > /dev/null 2>&1; then
       # icc doesn't choke on unknown options, it will just issue warnings
       # (even with -Werror).  So we grep stderr for any message
@@ -7840,6 +7886,70 @@ else
 fi
 
 
+# Check for ARM Performance Library
+# uses fftw3 API ...
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for fftw_execute in -larmpl_tl" >&5
+$as_echo_n "checking for fftw_execute in -larmpl_tl... " >&6; }
+if ${ac_cv_lib_armpl_tl_fftw_execute+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-larmpl_tl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char fftw_execute ();
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main ()
+{
+return fftw_execute ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_armpl_tl_fftw_execute=yes
+else
+  ac_cv_lib_armpl_tl_fftw_execute=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_armpl_tl_fftw_execute" >&5
+$as_echo "$ac_cv_lib_armpl_tl_fftw_execute" >&6; }
+if test "x$ac_cv_lib_armpl_tl_fftw_execute" = xyes; then :
+  LARMPL="-larmpl_tl"; have_armpl=yes
+fi
+
+# ... so also need the FFTW3 header
+test -n "$have_armpl" && test -n "$have_fftw3_h" && have_armpl_all=yes
+
+
+if test -n "$have_armpl_all"; then
+  HAVE_ARMPL_TRUE=
+  HAVE_ARMPL_FALSE='#'
+else
+  HAVE_ARMPL_TRUE='#'
+  HAVE_ARMPL_FALSE=
+fi
+
+
+
 # Check for DEC Alpha DXML library
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for zfft_ in -ldxml" >&5
 $as_echo_n "checking for zfft_ in -ldxml... " >&6; }
@@ -8674,7 +8784,7 @@ fi
 
 
 
-if test -n "$have_mkl_dfti"; then
+if test "yes" = "$have_mkl_dfti"; then
   HAVE_MKL_DFTI_TRUE=
   HAVE_MKL_DFTI_FALSE='#'
 else
@@ -10420,7 +10530,7 @@ else
 fi
 
 
-ac_config_files="$ac_config_files Makefile libbench/Makefile benchees/Makefile scripts/Makefile benchees/acml/Makefile benchees/arprec/Makefile benchees/bloodworth/Makefile benchees/burrus/Makefile benchees/cross/Makefile benchees/cwplib/Makefile benchees/dfftpack/Makefile benchees/dsp/Makefile benchees/dxml/Makefile benchees/emayer/Makefile benchees/esrfft/Makefile benchees/essl/Makefile benchees/ffte/Makefile benchees/fftpack/Makefile benchees/fftreal/Makefile benchees/fftw2/Makefile benchees/fftw3/Makefile benchees/fxt/Makefile benchees/glassman/Makefile benchees/goedecker/Makefile benchees/gpfa/Makefile benchees/green-ffts-2.0/Makefile benchees/gsl/Makefile benchees/harm/Makefile benchees/imsl/Makefile benchees/intel-ipps/Makefile benchees/intel-mkl/Makefile benchees/jmfft/Makefile benchees/kissfft/Makefile benchees/krukar/Makefile benchees/mfft/Makefile benchees/mixfft/Makefile benchees/monnier/Makefile benchees/morris/Makefile benchees/mpfun77/Makefile benchees/mpfun90/Makefile benchees/nag/Makefile benchees/napack/Makefile benchees/nr/Makefile benchees/numutils/Makefile benchees/ooura/Makefile benchees/qft/Makefile benchees/ransom/Makefile benchees/rmayer/Makefile benchees/sciport/Makefile benchees/sgimath/Makefile benchees/singleton/Makefile benchees/sorensen/Makefile benchees/spiral-fft/Makefile benchees/statlib/Makefile benchees/sunperf/Makefile benchees/temperton/Makefile benchees/teneyck/Makefile benchees/valkenburg/Makefile benchees/vbigdsp/Makefile benchees/vdsp/Makefile"
+ac_config_files="$ac_config_files Makefile libbench/Makefile benchees/Makefile scripts/Makefile benchees/acml/Makefile benchees/armpl/Makefile benchees/arprec/Makefile benchees/bloodworth/Makefile benchees/burrus/Makefile benchees/cross/Makefile benchees/cwplib/Makefile benchees/dfftpack/Makefile benchees/dsp/Makefile benchees/dxml/Makefile benchees/emayer/Makefile benchees/esrfft/Makefile benchees/essl/Makefile benchees/ffte/Makefile benchees/fftpack/Makefile benchees/fftreal/Makefile benchees/fftw2/Makefile benchees/fftw3/Makefile benchees/fxt/Makefile benchees/glassman/Makefile benchees/goedecker/Makefile benchees/gpfa/Makefile benchees/green-ffts-2.0/Makefile benchees/gsl/Makefile benchees/harm/Makefile benchees/imsl/Makefile benchees/intel-ipps/Makefile benchees/intel-mkl/Makefile benchees/jmfft/Makefile benchees/kissfft/Makefile benchees/krukar/Makefile benchees/mfft/Makefile benchees/mixfft/Makefile benchees/monnier/Makefile benchees/morris/Makefile benchees/mpfun77/Makefile benchees/mpfun90/Makefile benchees/nag/Makefile benchees/napack/Makefile benchees/nr/Makefile benchees/numutils/Makefile benchees/ooura/Makefile benchees/qft/Makefile benchees/ransom/Makefile benchees/rmayer/Makefile benchees/sciport/Makefile benchees/sgimath/Makefile benchees/singleton/Makefile benchees/sorensen/Makefile benchees/spiral-fft/Makefile benchees/statlib/Makefile benchees/sunperf/Makefile benchees/temperton/Makefile benchees/teneyck/Makefile benchees/valkenburg/Makefile benchees/vbigdsp/Makefile benchees/vdsp/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -10581,6 +10691,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_FFTW3F_TRUE}" && test -z "${HAVE_FFTW3F_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_FFTW3F\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_ARMPL_TRUE}" && test -z "${HAVE_ARMPL_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_ARMPL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_DXML_TRUE}" && test -z "${HAVE_DXML_FALSE}"; then
@@ -11237,6 +11351,7 @@ do
     "benchees/Makefile") CONFIG_FILES="$CONFIG_FILES benchees/Makefile" ;;
     "scripts/Makefile") CONFIG_FILES="$CONFIG_FILES scripts/Makefile" ;;
     "benchees/acml/Makefile") CONFIG_FILES="$CONFIG_FILES benchees/acml/Makefile" ;;
+    "benchees/armpl/Makefile") CONFIG_FILES="$CONFIG_FILES benchees/armpl/Makefile" ;;
     "benchees/arprec/Makefile") CONFIG_FILES="$CONFIG_FILES benchees/arprec/Makefile" ;;
     "benchees/bloodworth/Makefile") CONFIG_FILES="$CONFIG_FILES benchees/bloodworth/Makefile" ;;
     "benchees/burrus/Makefile") CONFIG_FILES="$CONFIG_FILES benchees/burrus/Makefile" ;;
@@ -12028,6 +12143,7 @@ cat <<EOF
                                           Intel IPPS (gratis): ${have_ipps-no}
                                    Intel IPPS 64 bit (gratis): ${have_ipps64-no}
                                             AMD ACML (gratis): ${have_acml-no}
+				      ARM Performance Library: ${have_armpl-no}
 
                                 FFTW 2.x (free, www.fftw.org): ${have_fftw2_all-no}
                FFTW 2.x single precision (free, www.fftw.org): ${have_sfftw2_all-no}

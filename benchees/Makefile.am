@@ -5,7 +5,7 @@ kissfft krukar mfft mixfft monnier morris mpfun77 mpfun90 nag napack	\
 nr numutils ooura qft ransom rmayer sciport sgimath singleton sorensen	\
 spiral-fft statlib sunperf temperton teneyck valkenburg vbigdsp vdsp
 # Only keep some tested-to-work (x86-64 in 2016) by default
-SUBDIRS = fftw3 intel-mkl
+SUBDIRS = fftw3 intel-mkl armpl
 
 EXTRA_DIST = Makefile.common
 
